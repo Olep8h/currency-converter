@@ -1,5 +1,5 @@
-import {CurrencyProvider} from "./CurrencyContext";
-import CurrencyConverter from "./CurrencyConverter";
+import {CurrencyProvider} from "./context/CurrencyContext";
+import CurrencyConverter from "./converter/CurrencyConverter";
 
 const App = () => {
     return (

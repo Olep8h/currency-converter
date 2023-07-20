@@ -1,6 +1,6 @@
 import React from 'react';
 import axios from 'axios';
-import { useCurrencyContext } from './CurrencyContext';
+import { useCurrencyContext } from '../context/CurrencyContext';
 import CurrencyConverterForm from './CurrencyConverterForm';
 import CurrencyConversionResult from './CurrencyConversionResult';
 import CurrencyTable from './CurrencyTable';
