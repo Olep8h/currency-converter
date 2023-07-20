@@ -1,15 +1,33 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React from 'react';
+import axios from 'axios';
+import { useCurrencyContext } from './CurrencyContext';
+import CurrencyConverterForm from './CurrencyConverterForm';
+import CurrencyConversionResult from './CurrencyConversionResult';
+import CurrencyTable from './CurrencyTable';
+
+const api = axios.create({
+    baseURL: 'https://v6.exchangerate-api.com/v6/7966b0b6fece859edef35b0f',
+});
 
 const CurrencyConverter = () => {
-    const [amount, setAmount] = useState("");
-    const [currency, setCurrency] = useState("USD");
-    const [textHint, setTextHint] = useState("");
-    const [conversionRate, setConversionRate] = useState(1);
-    const [entries, setEntries] = useState([]);
-    const [totalUSD, setTotalUSD] = useState(0);
-
-    const apiKey = "7966b0b6fece859edef35b0f";
+    const {
+        amount,
+        setAmount,
+        currency,
+        setCurrency,
+        textHint,
+        setTextHint,
+        conversionRate,
+        setConversionRate,
+        entries,
+        setEntries,
+        totalUSD,
+        setTotalUSD,
+        loading,
+        setLoading,
+        error,
+        setError,
+    } = useCurrencyContext();
 
     const handleAmountChange = (event) => {
         setAmount(event.target.value);
@@ -22,16 +40,19 @@ const CurrencyConverter = () => {
     };
 
     const updateTextHint = (amount, currency) => {
-        axios
-            .get(
-                `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${currency}/USD/${amount}`
-            )
+        setLoading(true);
+        setError('');
+
+        api.get(`/pair/${currency}/USD/${amount}`)
             .then((response) => {
                 setTextHint(`Approx. ${response.data.conversion_result.toFixed(2)} USD`);
                 setConversionRate(response.data.conversion_rate);
+                setLoading(false);
             })
             .catch((error) => {
-                console.error("Error fetching conversion rate:", error);
+                console.error('Error fetching conversion rate:', error);
+                setError('Error fetching conversion rate. Please try again later.');
+                setLoading(false);
             });
     };
 
@@ -43,64 +64,26 @@ const CurrencyConverter = () => {
         };
         setEntries([...entries, entry]);
         setTotalUSD((prevTotalUSD) => prevTotalUSD + amount * conversionRate);
-        setAmount("");
-        setTextHint("");
+        setAmount('');
+        setTextHint('');
     };
 
     return (
         <div className="max-w-md mx-auto mt-8 p-6 bg-white shadow-md rounded-lg">
-            <form onSubmit={handleSubmit} className="mb-6">
-                <label className="block mb-2 font-semibold text-gray-700">
-                    Amount:
-                    <input
-                        type="number"
-                        value={amount}
-                        onChange={handleAmountChange}
-                        className="block w-full mt-1 px-4 py-2 border rounded-lg shadow-sm focus:ring focus:ring-opacity-50"
-                        required
-                    />
-                </label>
-                <label className="block mb-2 font-semibold text-gray-700">
-                    Currency:
-                    <select
-                        value={currency}
-                        onChange={handleCurrencyChange}
-                        className="block w-full mt-1 px-4 py-2 border rounded-lg shadow-sm focus:ring focus:ring-opacity-50"
-                    >
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="CZK">CZK</option>
-                        {/* Add more currencies as needed */}
-                    </select>
-                </label>
-                <p className="text-gray-500 mb-2">{textHint}</p>
-                <button
-                    type="submit"
-                    className="w-full px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring focus:ring-opacity-50"
-                >
-                    Submit
-                </button>
-            </form>
-            <table className="w-full mb-6">
-                <thead>
-                <tr>
-                    <th className="px-4 py-2 text-left">Original Amount</th>
-                    <th className="px-4 py-2 text-left">Converted Amount (USD)</th>
-                </tr>
-                </thead>
-                <tbody>
-                {entries.map((entry, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-gray-100' : ''}>
-                        <td className="px-4 py-2">
-                            {entry.amount} {entry.currency}
-                        </td>
-                        <td className="px-4 py-2">
-                            {(entry.amount * conversionRate).toFixed(2)} USD
-                        </td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
+            <h1 className="text-3xl font-semibold mb-4 text-center text-blue-500">
+                Currency Converter
+            </h1>
+            <CurrencyConverterForm
+                amount={amount}
+                currency={currency}
+                handleAmountChange={handleAmountChange}
+                handleCurrencyChange={handleCurrencyChange}
+                handleSubmit={handleSubmit}
+            />
+            {loading && <p className="text-gray-500 mb-2">Loading...</p>}
+            {error && <p className="text-red-500 mb-2">{error}</p>}
+            {!loading && !error && <CurrencyConversionResult textHint={textHint} />}
+            <CurrencyTable entries={entries} conversionRate={conversionRate} />
             <p className="text-xl font-semibold">Total USD: {totalUSD.toFixed(2)}</p>
         </div>
     );
